@@ -28,7 +28,7 @@ The project focuses on the complete machine learning lifecycle, from data ingest
 * Pytest
 * Ruff
 * Docker (later)
-* GitHub Actions (later)
+* GitHub Actions
 
 ## Project Status
 
