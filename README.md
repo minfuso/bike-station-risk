@@ -55,8 +55,8 @@ bike-station-risk/
 
 - [x] Create repository
 - [x] Initialize with uv
-- [ ] Configure Ruff
-- [ ] Configure Pytest
+- [x] Configure Ruff
+- [x] Configure Pytest
 
 ### v0.2 - Data ingestion
 
