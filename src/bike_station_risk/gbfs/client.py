@@ -1,5 +1,7 @@
 """GBFS feed discovery client."""
 
+from typing import Any
+
 import httpx
 
 
@@ -36,7 +38,8 @@ class GbfsClient:
 
         return f"{self._base_url}/{endpoint.lstrip('/')}"
 
-    def get(self, endpoint: str) -> httpx.Response:
+    def get(self, endpoint: str) -> dict[str, Any]:
         url = self._build_url(endpoint)
+        response = httpx.get(url, timeout=self._timeout)
 
-        return httpx.get(url, timeout=self._timeout)
+        return response.json()
