@@ -1,3 +1,4 @@
+import json
 from typing import Never
 
 import httpx
@@ -138,4 +139,26 @@ def test_client_raises_network_exception(monkeypatch) -> None:
     monkeypatch.setattr(httpx, "get", fake_get)
 
     with pytest.raises(httpx.TimeoutException):
+        client.get("station_information.json")
+
+
+def test_client_raises_error_for_invalid_json(monkeypatch) -> None:
+    client = GbfsClient(base_url="https://example.com/")
+
+    request = httpx.Request(
+        method="GET",
+        url="https://example.com/station_information.json",
+    )
+    response = httpx.Response(
+        status_code=200,
+        request=request,
+        content=b"This is not valid JSON",
+    )
+
+    def fake_get(url: str, timeout: float) -> httpx.Response:
+        return response
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    with pytest.raises(json.JSONDecodeError):
         client.get("station_information.json")
