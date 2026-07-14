@@ -19,6 +19,7 @@ class GbfsClient:
         Args:
             base_url: Base URL of the GBFS system.
             timeout: Maximum request duration in seconds.
+            http_client: Optional HTTP client to reuse.
         """
 
         if not base_url.strip():
@@ -27,7 +28,7 @@ class GbfsClient:
         if timeout <= 0:
             raise ValueError("Timeout must be a positive number.")
 
-        self._base_url = base_url.rstrip("/")
+        self._base_url = base_url.strip().rstrip("/")
         self._timeout = timeout
         self._owns_http_client = http_client is None
 
