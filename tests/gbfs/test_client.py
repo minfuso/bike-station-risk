@@ -21,7 +21,7 @@ def test_client_uses_custom_timeout() -> None:
     assert client._timeout == 30.0
 
 
-def test_client_rejects_empty_url() -> None:
+def test_client_rejects_empty_base_url() -> None:
     with pytest.raises(ValueError):
         GbfsClient(base_url="")
 
@@ -56,7 +56,7 @@ def test_client_builds_url_from_endpoint_with_leading_slash() -> None:
     )
 
 
-def test_client_rejects_empty_endpoints() -> None:
+def test_client_rejects_empty_endpoint() -> None:
     client = GbfsClient(base_url="https://example.com/")
 
     with pytest.raises(ValueError):
