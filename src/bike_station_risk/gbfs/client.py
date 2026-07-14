@@ -28,7 +28,7 @@ class GbfsClient:
 
         self._base_url = base_url.rstrip("/")
         self._timeout = timeout
-        # self._client = httpx.Client(timeout=timeout)
+        self._http_client = httpx.Client(timeout=timeout)
 
     def _build_url(self, endpoint: str) -> str:
         if not endpoint.strip():
@@ -41,7 +41,11 @@ class GbfsClient:
     def get(self, endpoint: str) -> dict[str, Any]:
         url = self._build_url(endpoint)
 
-        response = httpx.get(url, timeout=self._timeout)
+        response = self._http_client.get(url)
         response.raise_for_status()
 
         return response.json()
+
+
+    def close(self) -> None:
+        self._http_client.close()

@@ -89,17 +89,15 @@ def test_client_returns_json_response(monkeypatch) -> None:
         json=expected_data,
     )
 
-    def fake_get(url: str, timeout: float) -> httpx.Response:
+    def fake_get(url: str) -> httpx.Response:
         called["url"] = url
-        called["timeout"] = timeout
         return response
 
-    monkeypatch.setattr(httpx, "get", fake_get)
+    monkeypatch.setattr(client._http_client, "get", fake_get)
 
     data = client.get("station_information.json")
 
     assert called["url"] == "https://example.com/station_information.json"
-    assert called["timeout"] == 30.0
     assert data == expected_data
 
 
@@ -116,10 +114,10 @@ def test_client_raises_error_for_unsuccessful_response(monkeypatch, status_code:
         request=request,
     )
 
-    def fake_get(url: str, timeout: float) -> httpx.Response:
+    def fake_get(url: str) -> httpx.Response:
         return response
 
-    monkeypatch.setattr(httpx, "get", fake_get)
+    monkeypatch.setattr(client._http_client, "get", fake_get)
 
     with pytest.raises(httpx.HTTPStatusError):
         client.get("station_information.json")
@@ -133,10 +131,10 @@ def test_client_raises_network_exception(monkeypatch) -> None:
         url="https://example.com/station_information.json",
     )
 
-    def fake_get(url: str, timeout: float) -> Never:
+    def fake_get(url: str) -> Never:
         raise httpx.TimeoutException(message="TimeoutException for testing", request=request)
 
-    monkeypatch.setattr(httpx, "get", fake_get)
+    monkeypatch.setattr(client._http_client, "get", fake_get)
 
     with pytest.raises(httpx.TimeoutException):
         client.get("station_information.json")
@@ -155,10 +153,28 @@ def test_client_raises_error_for_invalid_json(monkeypatch) -> None:
         content=b"This is not valid JSON",
     )
 
-    def fake_get(url: str, timeout: float) -> httpx.Response:
+    def fake_get(url: str) -> httpx.Response:
         return response
 
-    monkeypatch.setattr(httpx, "get", fake_get)
+    monkeypatch.setattr(client._http_client, "get", fake_get)
 
     with pytest.raises(json.JSONDecodeError):
         client.get("station_information.json")
+
+
+def test_client_closes_http_client(monkeypatch) -> None:
+    client = GbfsClient(
+        base_url="https://example.com/",
+        timeout=30.0,
+    )
+
+    called = {"close": False}
+    
+    def fake_close() -> None:
+        called["close"] = True
+
+    monkeypatch.setattr(client._http_client, "close", fake_close)
+    
+    client.close()
+
+    assert called["close"] is True
