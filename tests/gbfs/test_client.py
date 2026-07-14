@@ -36,3 +36,30 @@ def test_client_rejects_non_positive_timeout() -> None:
         GbfsClient(base_url="https://example.com/", timeout=-10)
     with pytest.raises(ValueError):
         GbfsClient(base_url="https://example.com/", timeout=0)
+
+
+def test_client_builds_url_from_endpoint_without_leading_slash() -> None:
+    client = GbfsClient(base_url="https://example.com/")
+
+    assert (
+        client._build_url("station_information.json")
+        == "https://example.com/station_information.json"
+    )
+
+
+def test_client_builds_url_from_endpoint_with_leading_slash() -> None:
+    client = GbfsClient(base_url="https://example.com/")
+
+    assert (
+        client._build_url("/station_information.json")
+        == "https://example.com/station_information.json"
+    )
+
+
+def test_client_rejects_empty_endpoints() -> None:
+    client = GbfsClient(base_url="https://example.com/")
+
+    with pytest.raises(ValueError):
+        client._build_url("")
+    with pytest.raises(ValueError):
+        client._build_url("  ")

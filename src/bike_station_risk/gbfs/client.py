@@ -24,3 +24,11 @@ class GbfsClient:
 
         self._base_url = base_url.rstrip("/")
         self._timeout = timeout
+
+    def _build_url(self, endpoint: str) -> str:
+        if not endpoint.strip():
+            raise ValueError("Endpoint must not be empty.")
+
+        endpoint = endpoint.strip()
+
+        return f"{self._base_url}/{endpoint.lstrip('/')}"
