@@ -12,6 +12,7 @@ class GbfsClient:
         self,
         base_url: str,
         timeout: float = 10.0,
+        http_client: httpx.Client | None = None,
     ) -> None:
         """Initialize the GBFS client.
 
@@ -28,7 +29,12 @@ class GbfsClient:
 
         self._base_url = base_url.rstrip("/")
         self._timeout = timeout
-        self._http_client = httpx.Client(timeout=timeout)
+        self._owns_http_client = http_client is None
+
+        if http_client is None:
+            self._http_client = httpx.Client(timeout=timeout)
+        else:
+            self._http_client = http_client
 
     def _build_url(self, endpoint: str) -> str:
         if not endpoint.strip():
@@ -46,6 +52,6 @@ class GbfsClient:
 
         return response.json()
 
-
     def close(self) -> None:
-        self._http_client.close()
+        if self._owns_http_client:
+            self._http_client.close()

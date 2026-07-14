@@ -12,17 +12,23 @@ def test_client_removes_trailing_slash_from_base_url() -> None:
 
     assert client._base_url == "https://example.com"
 
+    client.close()
+
 
 def test_client_uses_default_timeout() -> None:
     client = GbfsClient("https://example.com/")
 
     assert client._timeout == 10.0
 
+    client.close()
+
 
 def test_client_uses_custom_timeout() -> None:
     client = GbfsClient(base_url="https://example.com/", timeout=30.0)
 
     assert client._timeout == 30.0
+
+    client.close()
 
 
 def test_client_rejects_empty_base_url() -> None:
@@ -50,6 +56,8 @@ def test_client_builds_url_from_endpoint_without_leading_slash() -> None:
         == "https://example.com/station_information.json"
     )
 
+    client.close()
+
 
 def test_client_builds_url_from_endpoint_with_leading_slash() -> None:
     client = GbfsClient(base_url="https://example.com/")
@@ -59,6 +67,8 @@ def test_client_builds_url_from_endpoint_with_leading_slash() -> None:
         == "https://example.com/station_information.json"
     )
 
+    client.close()
+
 
 def test_client_rejects_empty_endpoint() -> None:
     client = GbfsClient(base_url="https://example.com/")
@@ -67,6 +77,8 @@ def test_client_rejects_empty_endpoint() -> None:
         client._build_url("")
     with pytest.raises(ValueError):
         client._build_url("  ")
+
+    client.close()
 
 
 def test_client_returns_json_response(monkeypatch) -> None:
@@ -100,6 +112,8 @@ def test_client_returns_json_response(monkeypatch) -> None:
     assert called["url"] == "https://example.com/station_information.json"
     assert data == expected_data
 
+    client.close()
+
 
 @pytest.mark.parametrize("status_code", [400, 404, 500, 503])
 def test_client_raises_error_for_unsuccessful_response(monkeypatch, status_code: int) -> None:
@@ -122,6 +136,8 @@ def test_client_raises_error_for_unsuccessful_response(monkeypatch, status_code:
     with pytest.raises(httpx.HTTPStatusError):
         client.get("station_information.json")
 
+    client.close()
+
 
 def test_client_raises_network_exception(monkeypatch) -> None:
     client = GbfsClient(base_url="https://example.com/")
@@ -138,6 +154,8 @@ def test_client_raises_network_exception(monkeypatch) -> None:
 
     with pytest.raises(httpx.TimeoutException):
         client.get("station_information.json")
+
+    client.close()
 
 
 def test_client_raises_error_for_invalid_json(monkeypatch) -> None:
@@ -161,6 +179,8 @@ def test_client_raises_error_for_invalid_json(monkeypatch) -> None:
     with pytest.raises(json.JSONDecodeError):
         client.get("station_information.json")
 
+    client.close()
+
 
 def test_client_closes_http_client(monkeypatch) -> None:
     client = GbfsClient(
@@ -169,12 +189,72 @@ def test_client_closes_http_client(monkeypatch) -> None:
     )
 
     called = {"close": False}
-    
+
     def fake_close() -> None:
         called["close"] = True
 
     monkeypatch.setattr(client._http_client, "close", fake_close)
-    
+
     client.close()
 
     assert called["close"] is True
+
+
+def test_client_uses_provided_http_client() -> None:
+    http_client = httpx.Client()
+
+    client = GbfsClient(
+        base_url="https://example.com/",
+        http_client=http_client,
+    )
+
+    assert client._http_client is http_client
+
+    http_client.close()
+
+
+def test_client_uses_injected_http_client() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url == "https://example.com/station_information.json"
+
+        return httpx.Response(
+            status_code=200,
+            json={"stations": []},
+        )
+
+    transport = httpx.MockTransport(handler)
+    http_client = httpx.Client(transport=transport)
+
+    client = GbfsClient(
+        base_url="https://example.com/",
+        http_client=http_client,
+    )
+
+    data = client.get("station_information.json")
+
+    assert data == {"stations": []}
+
+    http_client.close()
+
+
+def test_client_does_not_close_injected_http_client(monkeypatch) -> None:
+    http_client = httpx.Client()
+    real_close = http_client.close
+
+    client = GbfsClient(
+        base_url="https://example.com/",
+        http_client=http_client,
+    )
+
+    called = {"close": False}
+
+    def fake_close() -> None:
+        called["close"] = True
+
+    monkeypatch.setattr(http_client, "close", fake_close)
+
+    client.close()
+
+    assert called["close"] is False
+
+    real_close()
