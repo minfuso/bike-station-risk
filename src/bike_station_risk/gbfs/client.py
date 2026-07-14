@@ -1,5 +1,7 @@
 """GBFS feed discovery client."""
 
+import httpx
+
 
 class GbfsClient:
     """Synchronous client for discovering GBFS feeds."""
@@ -24,6 +26,7 @@ class GbfsClient:
 
         self._base_url = base_url.rstrip("/")
         self._timeout = timeout
+        # self._client = httpx.Client(timeout=timeout)
 
     def _build_url(self, endpoint: str) -> str:
         if not endpoint.strip():
@@ -32,3 +35,8 @@ class GbfsClient:
         endpoint = endpoint.strip()
 
         return f"{self._base_url}/{endpoint.lstrip('/')}"
+
+    def get(self, endpoint: str) -> httpx.Response:
+        url = self._build_url(endpoint)
+
+        return httpx.get(url, timeout=self._timeout)

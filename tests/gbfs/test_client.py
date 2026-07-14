@@ -1,3 +1,4 @@
+import httpx
 import pytest
 
 from bike_station_risk.gbfs import GbfsClient
@@ -63,3 +64,31 @@ def test_client_rejects_empty_endpoint() -> None:
         client._build_url("")
     with pytest.raises(ValueError):
         client._build_url("  ")
+
+
+# def test_client_uses_httpx_client() -> None:
+#     client = GbfsClient("https://example.com/")
+
+#     assert isinstance(client._client, httpx.Client)
+
+
+def test_client_performs_get_request(monkeypatch) -> None:
+    client = GbfsClient(
+        base_url="https://example.com/",
+        timeout=30.0,
+    )
+
+    called = {}
+
+    def fake_get(url: str, timeout: float) -> httpx.Response:
+        called["url"] = url
+        called["timeout"] = timeout
+        return httpx.Response(status_code=200)
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    response = client.get("station_information.json")
+
+    assert called["url"] == "https://example.com/station_information.json"
+    assert called["timeout"] == 30.0
+    assert response.status_code == 200
