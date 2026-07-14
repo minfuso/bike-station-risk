@@ -75,14 +75,21 @@ def test_client_returns_json_response(monkeypatch) -> None:
     expected_data = {"stations": {}}
     called = {}
 
-    class FakeResponse:
-        def json(self) -> dict:
-            return expected_data
+    request = httpx.Request(
+        "GET",
+        "https://example.com/station_information.json",
+    )
 
-    def fake_get(url: str, timeout: float) -> FakeResponse:
+    response = httpx.Response(
+        status_code=200,
+        request=request,
+        json=expected_data,
+    )
+
+    def fake_get(url: str, timeout: float) -> httpx.Response:
         called["url"] = url
         called["timeout"] = timeout
-        return FakeResponse()
+        return response
 
     monkeypatch.setattr(httpx, "get", fake_get)
 
@@ -91,3 +98,25 @@ def test_client_returns_json_response(monkeypatch) -> None:
     assert called["url"] == "https://example.com/station_information.json"
     assert called["timeout"] == 30.0
     assert data == expected_data
+
+
+@pytest.mark.parametrize("status_code", [400, 404, 500, 503])
+def test_client_raises_error_for_unsuccessful_response(monkeypatch, status_code: int) -> None:
+    client = GbfsClient(base_url="https://example.com/")
+
+    request = httpx.Request(
+        method="GET",
+        url="https://example.com/station_information.json",
+    )
+    response = httpx.Response(
+        status_code=status_code,
+        request=request,
+    )
+
+    def fake_get(url: str, timeout: float) -> httpx.Response:
+        return response
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    with pytest.raises(httpx.HTTPStatusError):
+        client.get("station_information.json")

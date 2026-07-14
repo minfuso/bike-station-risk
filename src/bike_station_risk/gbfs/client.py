@@ -40,6 +40,8 @@ class GbfsClient:
 
     def get(self, endpoint: str) -> dict[str, Any]:
         url = self._build_url(endpoint)
+
         response = httpx.get(url, timeout=self._timeout)
+        response.raise_for_status()
 
         return response.json()
