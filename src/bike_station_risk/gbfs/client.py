@@ -15,5 +15,12 @@ class GbfsClient:
             base_url: Base URL of the GBFS system.
             timeout: Maximum request duration in seconds.
         """
+
+        if not base_url.strip():
+            raise ValueError("Base URL must not be empty.")
+
+        if timeout <= 0:
+            raise ValueError("Timeout must be a positive number.")
+
         self._base_url = base_url.rstrip("/")
         self._timeout = timeout

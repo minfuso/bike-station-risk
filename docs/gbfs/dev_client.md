@@ -24,7 +24,6 @@ Validate the inputs provided to the constructor.
 **Goals**
 - Reject an empty base URL.
 - Reject a non-positive timeout.
-- Optionally validate the URL scheme (`http://` or `https://`).
 
 **Tests**
 - Empty base URL raises an error.
