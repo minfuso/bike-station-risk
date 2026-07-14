@@ -1,3 +1,5 @@
+from typing import Never
+
 import httpx
 import pytest
 
@@ -119,4 +121,21 @@ def test_client_raises_error_for_unsuccessful_response(monkeypatch, status_code:
     monkeypatch.setattr(httpx, "get", fake_get)
 
     with pytest.raises(httpx.HTTPStatusError):
+        client.get("station_information.json")
+
+
+def test_client_raises_network_exception(monkeypatch) -> None:
+    client = GbfsClient(base_url="https://example.com/")
+
+    request = httpx.Request(
+        method="GET",
+        url="https://example.com/station_information.json",
+    )
+
+    def fake_get(url: str, timeout: float) -> Never:
+        raise httpx.TimeoutException(message="TimeoutException for testing", request=request)
+
+    monkeypatch.setattr(httpx, "get", fake_get)
+
+    with pytest.raises(httpx.TimeoutException):
         client.get("station_information.json")
