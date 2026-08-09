@@ -285,6 +285,59 @@ def test_get_station_information_returns_selected_fields() -> None:
     http_client.close()
 
 
+def test_get_station_status_returns_station_statuses() -> None:
+
+    json_information = {
+        "data": {
+            "stations": [
+                {
+                    "station_id": "2",
+                    "num_bikes_available": 15,
+                    "vehicle_types_available": [{"count": 15, "vehicle_type_id": "bike"}],
+                    "num_docks_available": 16,
+                    "is_installed": True,
+                    "is_renting": True,
+                    "is_returning": True,
+                    "last_reported": 1786274980,
+                },
+            ],
+        }
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url == "https://example.com/station_status.json"
+
+        return httpx.Response(
+            status_code=200,
+            json=json_information,
+        )
+
+    transport = httpx.MockTransport(handler)
+    http_client = httpx.Client(transport=transport)
+
+    client = GbfsClient(
+        base_url="https://example.com/",
+        http_client=http_client,
+    )
+
+    data = client.get_station_status()
+
+    assert data == [
+        {
+            "station_id": "2",
+            "num_bikes_available": 15,
+            "vehicle_types_available": [{"count": 15, "vehicle_type_id": "bike"}],
+            "num_docks_available": 16,
+            "is_installed": True,
+            "is_renting": True,
+            "is_returning": True,
+            "last_reported": 1786274980,
+        },
+    ]
+
+    http_client.close()
+
+
 def test_client_does_not_close_injected_http_client(monkeypatch) -> None:
     http_client = httpx.Client()
     real_close = http_client.close
