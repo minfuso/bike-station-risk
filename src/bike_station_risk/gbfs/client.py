@@ -77,8 +77,27 @@ class GbfsClient:
         return stations
 
     def get_station_status(self) -> list[dict[str, Any]]:
+        selected_keys = {
+            "station_id",
+            "num_bikes_available",
+            "num_docks_available",
+            "is_installed",
+            "is_renting",
+            "is_returning",
+            "last_reported",
+        }
+
         data = self.get("station_status.json")
         status = data["data"]["stations"]
+
+        for i, station_status in enumerate(status):
+            filtered_status = {}
+
+            for key, value in station_status.items():
+                if key in selected_keys:
+                    filtered_status[key] = value
+
+            status[i] = filtered_status
 
         return status
 

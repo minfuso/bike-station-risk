@@ -322,11 +322,12 @@ def test_get_station_status_returns_station_statuses() -> None:
 
     data = client.get_station_status()
 
+    print(data)
+
     assert data == [
         {
             "station_id": "2",
             "num_bikes_available": 15,
-            "vehicle_types_available": [{"count": 15, "vehicle_type_id": "bike"}],
             "num_docks_available": 16,
             "is_installed": True,
             "is_renting": True,
