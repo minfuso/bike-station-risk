@@ -53,6 +53,33 @@ class GbfsClient:
 
         return response.json()
 
+    def get_station_information(self) -> list[dict[str, Any]]:
+        selected_keys = {
+            "name",
+            "capacity",
+            "station_id",
+            "lat",
+            "lon",
+        }
+
+        url = self._build_url("station_information.json")
+
+        response = self._http_client.get(url)
+        response.raise_for_status()
+
+        stations = response.json()["data"]["stations"]
+
+        for i, station in enumerate(stations):
+            filtered_station = {}
+
+            for key, value in station.items():
+                if key in selected_keys:
+                    filtered_station[key] = value
+
+            stations[i] = filtered_station
+
+        return stations
+
     def close(self) -> None:
         if self._owns_http_client:
             self._http_client.close()

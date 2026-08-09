@@ -237,6 +237,54 @@ def test_client_uses_injected_http_client() -> None:
     http_client.close()
 
 
+def test_get_station_information_returns_selected_fields() -> None:
+
+    json_information = {
+        "data": {
+            "stations": [
+                {
+                    "station_id": "123",
+                    "name": "République",
+                    "lat": 50.6292,
+                    "lon": 3.0573,
+                    "capacity": 20,
+                    "is_virtual_station": False,
+                }
+            ]
+        }
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url == "https://example.com/station_information.json"
+
+        return httpx.Response(
+            status_code=200,
+            json=json_information,
+        )
+
+    transport = httpx.MockTransport(handler)
+    http_client = httpx.Client(transport=transport)
+
+    client = GbfsClient(
+        base_url="https://example.com/",
+        http_client=http_client,
+    )
+
+    data = client.get_station_information()
+
+    assert data == [
+        {
+            "station_id": "123",
+            "name": "République",
+            "lat": 50.6292,
+            "lon": 3.0573,
+            "capacity": 20,
+        }
+    ]
+
+    http_client.close()
+
+
 def test_client_does_not_close_injected_http_client(monkeypatch) -> None:
     http_client = httpx.Client()
     real_close = http_client.close
